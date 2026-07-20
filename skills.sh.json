@@ -1,0 +1,11 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Agent Memory",
+      "description": "Skills for maintaining durable, linked project knowledge.",
+      "skills": ["memory"]
+    }
+  ]
+}
