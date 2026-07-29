@@ -1,16 +1,16 @@
 # Agent Skills
 
-[![skills.sh](https://skills.sh/b/roman-pinchuk/agent-skills)](https://skills.sh/roman-pinchuk/agent-skills)
+[![skills.sh collection installs](https://skills.sh/b/roman-pinchuk/agent-skills)](https://skills.sh/roman-pinchuk/agent-skills)
 [![Validate skills](https://github.com/roman-pinchuk/agent-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/roman-pinchuk/agent-skills/actions/workflows/validate.yml)
 
 A collection of reusable skills for AI coding agents. Each skill follows the [Agent Skills](https://agentskills.io/) format and can be installed independently or as part of the collection.
 
 ## Available Skills
 
-| Skill | Description |
-| --- | --- |
-| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. |
-| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. |
+| Skill | Description | Stats |
+| --- | --- | --- |
+| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [Installs](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
+| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [Installs](https://skills.sh/roman-pinchuk/agent-skills/memory) |
 
 ### Home Assistant CLI
 
