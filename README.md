@@ -9,8 +9,8 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 
 | Skill | Description | Stats |
 | --- | --- | --- |
-| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [Installs](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
-| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [Installs](https://skills.sh/roman-pinchuk/agent-skills/memory) |
+| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
+| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
 
 ### Home Assistant CLI
 
