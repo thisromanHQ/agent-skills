@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: roman-pinchuk
   version: "1.0.0"
-  repository: https://github.com/roman-pinchuk/MEMORY.md
+  repository: https://github.com/roman-pinchuk/agent-skills
 ---
 
 # Project Memory

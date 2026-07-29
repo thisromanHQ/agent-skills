@@ -3,7 +3,12 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "Agent Memory",
+      "title": "Tool CLIs",
+      "description": "Skills for working safely and effectively with command-line tools.",
+      "skills": ["hass-cli"]
+    },
+    {
+      "title": "Agent Workflows",
       "description": "Skills for maintaining durable, linked project knowledge.",
       "skills": ["memory"]
     }

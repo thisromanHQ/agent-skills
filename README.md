@@ -1,128 +1,88 @@
-# Agent Memory Skill
+# Agent Skills
 
-[![skills.sh](https://skills.sh/b/roman-pinchuk/MEMORY.md)](https://skills.sh/roman-pinchuk/MEMORY.md)
-[![Validate skill](https://github.com/roman-pinchuk/MEMORY.md/actions/workflows/validate.yml/badge.svg)](https://github.com/roman-pinchuk/MEMORY.md/actions/workflows/validate.yml)
+[![skills.sh](https://skills.sh/b/roman-pinchuk/agent-skills)](https://skills.sh/roman-pinchuk/agent-skills)
+[![Validate skills](https://github.com/roman-pinchuk/agent-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/roman-pinchuk/agent-skills/actions/workflows/validate.yml)
 
-An opencode-compatible Agent Skill for maintaining durable project knowledge
-through a concise `MEMORY.md` entry point and linked Markdown documents.
+A collection of reusable skills for AI coding agents. Each skill follows the [Agent Skills](https://agentskills.io/) format and can be installed independently or as part of the collection.
 
-This skill is inspired by Andrej Karpathy's [LLM Wiki
-pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
-It keeps the useful part of that idea without requiring a database, CLI,
-frontmatter schema, or specific documentation layout.
+## Available Skills
 
-## What It Does
+| Skill | Description |
+| --- | --- |
+| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. |
+| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. |
 
-The skill guides agents to:
+### Home Assistant CLI
 
-- Read `MEMORY.md` before searching broadly for project context
-- Keep `MEMORY.md` as a concise map rather than a knowledge dump
-- Integrate new information into existing notes instead of creating isolated summaries
-- Preserve links to source files, issues, commits, and other evidence
-- Record contradictions and uncertainty instead of silently guessing
-- Update memory when an implementation changes durable project knowledge
-- Ask before recording optional, sensitive, or ambiguous knowledge
-- Audit links, stale summaries, duplicate notes, and unreachable documentation
+The `hass-cli` skill covers:
 
-When a project has no `MEMORY.md`, the first request to remember, document, or
-ingest knowledge runs the initialization workflow: establish or create
-`docs/ARCHITECTURE.md`, then create `MEMORY.md` and index the architecture
-overview before adding other notes.
+- Safe discovery of states, services, devices, areas, and events
+- Service calls, templates, raw API requests, and Home Assistant OS commands
+- `HASS_SERVER`, `HASS_TOKEN`, and supervisor access handling
+- Parseable JSON and YAML output
+- Confirmation and verification around state-changing operations
 
-## Repository Structure
+The CLI itself is provided by [home-assistant-ecosystem/home-assistant-cli](https://github.com/home-assistant-ecosystem/home-assistant-cli).
 
-This repository contains the skill and its validation workflow:
+### Project Memory
 
-```text
-.github/
-└── workflows/
-    └── validate.yml
-memory/
-└── SKILL.md
-.gitignore
-LICENSE
-README.md
-skills.sh.json
-```
+The `memory` skill guides agents to:
 
-## Target Project Layout
+- Use `MEMORY.md` as a concise map of durable project knowledge
+- Link detailed notes and existing documentation instead of creating a knowledge dump
+- Preserve evidence, uncertainty, and contradictions
+- Update memory when implementation changes documented behavior
+- Audit stale summaries, broken links, duplicate notes, and missing provenance
 
-`MEMORY.md` and `docs/ARCHITECTURE.md` are created in projects using the
-skill; they are not part of this repository. A project can start with:
-
-```text
-MEMORY.md
-docs/
-└── ARCHITECTURE.md
-```
-
-`MEMORY.md` should contain categorized links with one-sentence descriptions.
-Detailed knowledge stays in the linked documents, whether those documents are
-new memory notes or existing project documentation. When initializing a
-project without memory, the skill creates or reuses `docs/ARCHITECTURE.md` and
-adds it as the first entry in `MEMORY.md`. New notes should be placed beside
-related documentation or, when no suitable location exists, in a flat
-`docs/<topic>.md` file. The skill does not require category directories.
+The approach is inspired by Andrej Karpathy's [LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
 
 ## Install
 
 ### skills.sh
 
+Install the collection:
+
 ```bash
-npx skills add roman-pinchuk/MEMORY.md
+npx skills add roman-pinchuk/agent-skills
 ```
 
-To install only this skill explicitly:
+Install one skill:
 
 ```bash
-npx skills add roman-pinchuk/MEMORY.md --skill memory
+npx skills add roman-pinchuk/agent-skills --skill hass-cli
+npx skills add roman-pinchuk/agent-skills --skill memory
 ```
 
 ### opencode
 
+Clone the repository into an opencode skills directory:
+
 ```bash
-git clone https://github.com/roman-pinchuk/MEMORY.md.git ~/.config/opencode/skills/MEMORY.md
+git clone https://github.com/roman-pinchuk/agent-skills.git ~/.config/opencode/skills/roman-pinchuk-agent-skills
 ```
 
-Then restart opencode so it reloads available skills.
-
-Project-local installation:
+For a project-local installation:
 
 ```bash
 mkdir -p .opencode/skills
-git clone https://github.com/roman-pinchuk/MEMORY.md.git .opencode/skills/MEMORY.md
+git clone https://github.com/roman-pinchuk/agent-skills.git .opencode/skills/roman-pinchuk-agent-skills
 ```
 
-### Other SKILL.md-compatible agents
+Restart opencode after cloning so it discovers the `SKILL.md` files recursively.
 
-Clone or copy this repository into the skill directory watched by your agent.
-The important file is [`memory/SKILL.md`](./memory/SKILL.md).
+## Repository Structure
 
-## Example Entry Point
-
-```markdown
-# Project Memory
-
-## Architecture
-
-- [System overview](docs/ARCHITECTURE.md) - Components and data flows.
-- [Authentication](docs/authentication.md) - Auth boundaries and token behavior.
-
-## Decisions
-
-- [Database selection](docs/database.md) - Why PostgreSQL was selected.
-
-## Open Questions
-
-- [Knowledge gaps](docs/open-questions.md) - Unresolved or contradictory information.
+```text
+.github/workflows/validate.yml
+skills/
+├── hass-cli/
+│   └── SKILL.md
+└── memory/
+    └── SKILL.md
+LICENSE
+README.md
+skills.sh.json
 ```
-
-## Principles
-
-- Source documents are evidence and should not be modified during ingestion.
-- Memory should contain durable knowledge, not secrets, temporary debugging state, or guesses.
-- Git history supplies change history; a duplicate memory log is unnecessary.
-- The agent should write back useful conclusions when appropriate so knowledge compounds across sessions.
 
 ## License
 
