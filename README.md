@@ -9,8 +9,21 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 
 | Skill | Description | Stats |
 | --- | --- | --- |
+| [`cloudflare-cli`](./skills/cloudflare-cli/) | Manage Cloudflare resources safely through the unified, technical-preview `cf` CLI. | [![View cloudflare-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/cloudflare-cli) |
 | [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
+
+### Cloudflare CLI
+
+The `cloudflare-cli` skill covers:
+
+- Live command discovery through `cf agent-context`, `--help`, and `cf schema`
+- OAuth profiles, API-token authentication, and account or zone context
+- JSON output, Local Explorer routing, and sanitized error handling
+- Dry runs, confirmation, and read-only verification around Cloudflare changes
+- Clear separation between the technical-preview `cf` CLI and Wrangler
+
+The CLI itself is provided by Cloudflare's [`cf` npm package](https://www.npmjs.com/package/cf).
 
 ### Home Assistant CLI
 
@@ -49,6 +62,7 @@ npx skills add roman-pinchuk/agent-skills
 Install one skill:
 
 ```bash
+npx skills add roman-pinchuk/agent-skills --skill cloudflare-cli
 npx skills add roman-pinchuk/agent-skills --skill hass-cli
 npx skills add roman-pinchuk/agent-skills --skill memory
 ```
@@ -75,6 +89,8 @@ Restart opencode after cloning so it discovers the `SKILL.md` files recursively.
 ```text
 .github/workflows/validate.yml
 skills/
+├── cloudflare-cli/
+│   └── SKILL.md
 ├── hass-cli/
 │   └── SKILL.md
 └── memory/
