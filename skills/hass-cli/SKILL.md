@@ -4,7 +4,7 @@ description: Use when working with the Home Assistant CLI (`hass-cli`) to inspec
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.0.0"
+  version: "1.0.1"
   repository: https://github.com/roman-pinchuk/agent-skills
 ---
 
@@ -34,7 +34,23 @@ Do not use this skill for the separate `ha` command-line tool unless the user sp
 2. If missing, suggest one upstream-supported install method: `pip install homeassistant-cli`, `brew install homeassistant-cli`, `dnf install home-assistant-cli`, NixOS package, or Docker.
 3. Confirm connection configuration without revealing secrets. `hass-cli` uses `HASS_SERVER` and `HASS_TOKEN`, or `--server` and `--token` per command.
 4. For Home Assistant Operating System `hass-cli ha ...` commands, verify that supervisor access is available through `HASS_SUPERVISOR_TOKEN` or `--supervisor-token`.
-5. Use `hass-cli --help` and subcommand `--help` output when command syntax is uncertain.
+5. Use `hass-cli system info` or `hass-cli raw get /api/` for a read-only connectivity check when access is needed.
+
+## Command Syntax Is Live
+
+The installed CLI is the source of truth. Do not infer command names, option names, option placement, or argument formats from memory, examples, another CLI, or a sibling command.
+
+Before composing a command:
+
+1. Run `hass-cli --version` and note the installed version.
+2. Run `hass-cli --help` to confirm the command group exists.
+3. Run `hass-cli GROUP --help` to confirm the subcommand exists.
+4. Run `hass-cli GROUP COMMAND --help` immediately before using that command.
+5. Use only arguments and options shown by the exact command help. Do not transfer options between commands without verifying them.
+
+Global options such as `--output`, `--columns`, `--sort-by`, and `--no-headers` normally belong before the command group, for example `hass-cli --output=json state list`. If the command's help shows a different placement, follow that help.
+
+If the CLI reports an unknown command, option, or argument, stop and inspect the relevant help output. Do not retry by guessing a spelling, changing option placement, or substituting a command from another CLI. Report the installed version and sanitized error if the supported syntax is still unclear.
 
 ## Common Commands
 
@@ -60,6 +76,8 @@ hass-cli service call backup.create
 hass-cli state edit sensor.test --json='{ "state": "off" }'
 ```
 
+`service call` invokes Home Assistant behavior and is the normal way to control a physical device. `state edit` writes an entity state representation and is not a replacement for turning a light, switch, climate device, or other physical entity on or off. Use `state edit` only when the user explicitly needs to alter an entity state and the exact command help confirms the intended behavior.
+
 Formatting and filtering:
 
 ```bash
@@ -81,11 +99,13 @@ hass-cli raw get /api/
 ## Workflow
 
 1. Identify whether the task is inspection, automation, configuration, or administration.
-2. Start with discovery commands such as `state list`, `service list`, `device list`, `area list`, or the relevant `--help` command.
-3. Use exact entity IDs, service names, device names, or area names from discovery output rather than guessing.
-4. Choose parseable output with `--output=json` or `--output=yaml` when consuming results programmatically.
-5. Before making changes, show the exact `hass-cli` command and get confirmation unless the user has already explicitly requested that action.
-6. After changes, verify with a read-only command such as `state get`, `area list`, `device list`, or `ha core info`.
+2. Check the installed version and obtain help for the exact command path before writing the command.
+3. Start with read-only discovery such as `state list`, `service list`, `device list`, `area list`, or entity/integration discovery.
+4. Use exact entity IDs, service names, device names, area names, and command options from discovery and help output rather than guessing.
+5. Choose parseable output with `--output=json` or `--output=yaml` when consuming results programmatically, and verify that the exact command accepts the selected global option.
+6. For physical device control, identify the service from `service list` and use `service call`; do not substitute `state edit`.
+7. Before making changes, show the exact command and get confirmation unless the user has already explicitly requested that action.
+8. After changes, verify with a read-only command such as `state get`, `area list`, `device list`, or `ha core info`.
 
 ## Command Groups
 
