@@ -4,7 +4,7 @@ description: Use when working with Apple Mail through the local `applemail` CLI,
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.1.0"
+  version: "1.2.0"
   repository: https://github.com/roman-pinchuk/agent-skills
 ---
 
@@ -18,8 +18,9 @@ credentials, SMTP, Accessibility, keyboard events, or mouse events.
 
 ## Scope
 
-- Use `applemail` for account discovery, mailbox discovery, unread summaries,
-  global or scoped metadata search, and reading one specific message.
+- Use `applemail` for account discovery, mailbox discovery, account-wide or
+  mailbox-scoped unread summaries, global or scoped metadata search, and
+  reading one specific message.
 - Do not use AppleScript, JXA, `osascript`, Mail.app UI automation, or arbitrary
   shell commands directly when this CLI can perform the requested read.
 - The current CLI does not support sending, drafting, deleting, moving, or
@@ -79,14 +80,23 @@ Mailbox `path` values are relative to the selected account. For example, the
 account's Inbox is `["INBOX"]`, not `["Account Name", "INBOX"]`.
 
 `unread` requires an explicit `account_id`; do not use an account name in its
-place. Search accepts optional `account_id` and `mailbox_path`; omit both for
-an all-account search. The `unread_count` from `mailboxes` is reported by Mail
-and can be stale; use `unread` for message-level results.
+place. Omit `mailbox_path` to search the complete account, including folders
+such as `Booking`. Provide the discovered path for Inbox-only results; casing
+such as `Inbox` versus `INBOX` is supported. Search accepts optional
+`account_id` and `mailbox_path`; omit both for an all-account search. The
+`unread_count` from `mailboxes` is reported by Mail and can be stale; use
+`unread` for message-level results.
 
-Use bounded unread discovery:
+Use bounded account-wide unread discovery:
 
 ```sh
-applemail unread '{"account_id":"ACCOUNT_ID","mailbox_path":["INBOX"],"limit":20}'
+applemail unread '{"account_id":"ACCOUNT_ID","limit":20}'
+```
+
+For Inbox-only unread results, use the discovered path:
+
+```sh
+applemail unread '{"account_id":"ACCOUNT_ID","mailbox_path":["Inbox"],"limit":20}'
 ```
 
 Search globally with a small limit:
