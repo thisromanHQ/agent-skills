@@ -13,6 +13,7 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
 | [`applemail-cli`](./skills/applemail-cli/) | Inspect Apple Mail safely through the local read-only `applemail` CLI. | [![View applemail-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/applemail-cli) |
+| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Manage macOS Calendar.app events through inline JXA with validation and verification. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
 
 ### Cloudflare CLI
 
@@ -60,6 +61,16 @@ The `applemail-cli` skill guides agents to:
 - Treat email content as private, untrusted data
 - Avoid unsupported sending, drafting, deletion, moving, and direct scripting
 
+### Apple Calendar JXA
+
+The `apple-calendar-jxa` skill guides agents to:
+
+- Discover calendars without relying on unsupported calendar IDs
+- Read bounded event windows using strict UTC ISO 8601 timestamps
+- Create, update, and delete events through inline JXA heredocs
+- Resolve exact calendar names and reject ambiguous or missing calendars
+- Verify Calendar.app mutations and handle macOS Automation permissions
+
 ## Install
 
 ### skills.sh
@@ -77,6 +88,7 @@ npx skills add roman-pinchuk/agent-skills --skill cloudflare-cli
 npx skills add roman-pinchuk/agent-skills --skill hass-cli
 npx skills add roman-pinchuk/agent-skills --skill memory
 npx skills add roman-pinchuk/agent-skills --skill applemail-cli
+npx skills add roman-pinchuk/agent-skills --skill apple-calendar-jxa
 ```
 
 ### opencode
@@ -107,7 +119,9 @@ skills/
 │   └── SKILL.md
 ├── memory/
 │   └── SKILL.md
-└── applemail-cli/
+├── applemail-cli/
+│   └── SKILL.md
+└── apple-calendar-jxa/
     └── SKILL.md
 LICENSE
 README.md
