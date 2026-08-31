@@ -4,7 +4,7 @@ description: Use when working with macOS Calendar.app or Apple Calendar events t
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.0.0"
+  version: "1.1.0"
   repository: https://github.com/roman-pinchuk/agent-skills
 ---
 
@@ -36,6 +36,8 @@ native inline JXA. Do not search for or execute external wrapper scripts.
   then verify the resulting event by ID.
 - A non-zero `osascript` exit status means the operation was not confirmed. Do
   not infer success from partial output.
+- The optional EventKit travel mode uses private selectors. Feature-detect them,
+  disclose that they are unsupported by Apple, and fall back if unavailable.
 
 ## Dates And Values
 
@@ -208,3 +210,170 @@ JSON.stringify({status: "success", deleted: title}, null, 2);
 
 These mutation snippets are JavaScript bodies and must be placed inside the
 same `osascript -l JavaScript <<'EOF'` heredoc as the helper definitions.
+
+## EventKit Travel Mode (Opt-In)
+
+Use this mode only when the user explicitly wants Calendar-style travel event
+metadata, such as separate departure and arrival time zones or a map-backed
+airport location. The stable Calendar.app JXA workflow remains the default.
+
+EventKit is a separate authorization boundary. A process may have write-only
+access, full access, or no access. Write-only access can create an event only in
+`defaultCalendarForNewEvents`; it cannot enumerate named calendars or re-fetch
+the saved event. Full access is required to select `Private ` by name and to
+read, update, delete, or verify an EventKit event. Do not assume Calendar.app
+Automation permission grants EventKit access.
+
+The public EventKit API supports `structuredLocation`, `URL`, and one public
+`timeZone`. Calendar.app and EventKit also expose private selectors on some
+macOS versions: `startTimeZone`, `endTimeZone`, `setStartTimeZone:`, and
+`setEndTimeZone:`. These are the selectors Siri appears to use for cross-timezone
+travel events. They are not an Apple-supported API and must be checked at
+runtime before use.
+
+Do not use private selectors to edit an existing event unless the user has
+explicitly approved this experimental mode. If a private setter is unavailable,
+preserve the correct UTC instants, use the public event timezone, and put both
+airport-local times and IANA timezone names in the notes.
+
+### Airport Map Lookup
+
+Use MapKit to resolve an airport and require the user to confirm the selected
+result before saving. Do not invent coordinates or silently accept the first
+result when multiple results are returned. `MKLocalSearch` is asynchronous, so
+keep the run loop alive while waiting and fail on timeout.
+
+```bash
+osascript -l JavaScript <<'EOF'
+ObjC.import("Foundation");
+ObjC.import("MapKit");
+
+function mapItemForAirport(query) {
+    const request = $.MKLocalSearchRequest.alloc.init;
+    request.naturalLanguageQuery = query;
+    const search = $.MKLocalSearch.alloc.initWithRequest(request);
+    let done = false;
+    let result = null;
+    let failure = null;
+    search.startWithCompletionHandler((response, error) => {
+        try {
+            if (error) throw new Error(ObjC.unwrap(error.localizedDescription));
+            if (Number(response.mapItems.count) === 0) throw new Error(`Airport not found: ${query}`);
+            result = response.mapItems.objectAtIndex(0);
+        } catch (error) {
+            failure = String(error);
+        }
+        done = true;
+    });
+    const deadline = Date.now() + 15000;
+    while (!done && Date.now() < deadline) {
+        $.NSRunLoop.currentRunLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(0.1));
+    }
+    if (!done) throw new Error("MapKit airport lookup timed out");
+    if (failure) throw new Error(failure);
+    return result;
+}
+
+const item = mapItemForAirport("Ben Gurion Airport, Israel");
+JSON.stringify({name: ObjC.unwrap(item.name)}, null, 2);
+EOF
+```
+
+### Create A Cross-Timezone Event
+
+This template uses EventKit and MapKit in one inline script. Replace values with
+JSON string literals. It requires full EventKit access when `CALENDAR_NAME_JSON`
+is not the default calendar. The two UTC timestamps are the source of truth;
+the local strings are explanatory notes for clients that display one timezone.
+
+```bash
+osascript -l JavaScript <<'EOF'
+ObjC.import("Foundation");
+ObjC.import("EventKit");
+ObjC.import("MapKit");
+
+const calendarName = CALENDAR_NAME_JSON;
+const title = TITLE_JSON;
+const startISO = START_ISO_JSON;
+const endISO = END_ISO_JSON;
+const departureZoneName = DEPARTURE_TIMEZONE_JSON;
+const arrivalZoneName = ARRIVAL_TIMEZONE_JSON;
+const departureLocal = DEPARTURE_LOCAL_JSON;
+const arrivalLocal = ARRIVAL_LOCAL_JSON;
+const departureAirport = DEPARTURE_AIRPORT_JSON;
+const arrivalAirport = ARRIVAL_AIRPORT_JSON;
+const store = $.EKEventStore.alloc.init;
+
+function dateFromISO(value, field) {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value)) throw new Error(`${field} must be UTC ISO 8601`);
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) throw new Error(`${field} is invalid`);
+    return $.NSDate.dateWithTimeIntervalSince1970(date.getTime() / 1000);
+}
+
+function airportMapItem(query) {
+    const request = $.MKLocalSearchRequest.alloc.init;
+    request.naturalLanguageQuery = query;
+    const search = $.MKLocalSearch.alloc.initWithRequest(request);
+    let done = false;
+    let result = null;
+    let failure = null;
+    search.startWithCompletionHandler((response, error) => {
+        try {
+            if (error) throw new Error(ObjC.unwrap(error.localizedDescription));
+            if (Number(response.mapItems.count) === 0) throw new Error(`Airport not found: ${query}`);
+            result = response.mapItems.objectAtIndex(0);
+        } catch (error) { failure = String(error); }
+        done = true;
+    });
+    const deadline = Date.now() + 15000;
+    while (!done && Date.now() < deadline) $.NSRunLoop.currentRunLoop.runUntilDate($.NSDate.dateWithTimeIntervalSinceNow(0.1));
+    if (!done) throw new Error("MapKit airport lookup timed out");
+    if (failure) throw new Error(failure);
+    return result;
+}
+
+const calendars = store.calendarsForEntityType(0);
+let cal = null;
+for (let i = 0; i < Number(calendars.count); i++) {
+    const candidate = calendars.objectAtIndex(i);
+    if (ObjC.unwrap(candidate.title) === calendarName) {
+        if (cal) throw new Error(`Calendar name is not unique: ${calendarName}`);
+        cal = candidate;
+    }
+}
+if (!cal) throw new Error(`Calendar not found through EventKit: ${calendarName}`);
+
+const start = dateFromISO(startISO, "start");
+const end = dateFromISO(endISO, "end");
+if (end.timeIntervalSince1970 <= start.timeIntervalSince1970) throw new Error("end must be later than start");
+const startZone = $.NSTimeZone.timeZoneWithName(departureZoneName);
+const endZone = $.NSTimeZone.timeZoneWithName(arrivalZoneName);
+if (!startZone || !endZone) throw new Error("Unknown IANA timezone");
+if (!$.EKEvent.instancesRespondToSelector("setStartTimeZone:") || !$.EKEvent.instancesRespondToSelector("setEndTimeZone:")) throw new Error("Private EventKit timezone selectors are unavailable");
+
+const event = $.EKEvent.eventWithEventStore(store);
+event.title = title;
+event.calendar = cal;
+event.startDate = start;
+event.endDate = end;
+event.timeZone = startZone;
+event.setStartTimeZone(startZone);
+event.setEndTimeZone(endZone);
+const departureItem = airportMapItem(departureAirport);
+const arrivalItem = airportMapItem(arrivalAirport);
+event.location = `${departureAirport} to ${arrivalAirport}`;
+event.structuredLocation = $.EKStructuredLocation.locationWithMapItem(departureItem);
+event.URL = $.NSURL.URLWithString(`http://maps.apple.com/?saddr=${encodeURIComponent(departureAirport)}&daddr=${encodeURIComponent(arrivalAirport)}`);
+event.notes = `Departure: ${departureLocal} (${departureZoneName})\nArrival: ${arrivalLocal} (${arrivalZoneName})\nMap: ${ObjC.unwrap(event.URL.absoluteString)}`;
+let error = null;
+if (!store.saveEventSpanError(event, 0, error)) throw new Error("EventKit save returned false");
+JSON.stringify({status: "success", id: ObjC.unwrap(event.eventIdentifier), title, startISO, endISO, departureZoneName, arrivalZoneName, structuredLocation: true}, null, 2);
+EOF
+```
+
+The example intentionally stores the departure airport as the event's
+structured location and includes the complete route as an Apple Maps URL. If
+the user wants the arrival airport embedded in Calendar's location card too,
+create a second event or ask them to select the arrival location manually; one
+event has one public structured location.

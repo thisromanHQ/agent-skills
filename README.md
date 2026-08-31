@@ -13,7 +13,7 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
 | [`applemail-cli`](./skills/applemail-cli/) | Inspect Apple Mail safely through the local read-only `applemail` CLI. | [![View applemail-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/applemail-cli) |
-| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Manage macOS Calendar.app events through inline JXA with validation and verification. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
+| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Manage macOS Calendar.app events through inline JXA with validation, verification, and opt-in EventKit travel metadata. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
 
 ### Cloudflare CLI
 
@@ -70,6 +70,8 @@ The `apple-calendar-jxa` skill guides agents to:
 - Create, update, and delete events through inline JXA heredocs
 - Resolve exact calendar names and reject ambiguous or missing calendars
 - Verify Calendar.app mutations and handle macOS Automation permissions
+- Optionally use EventKit and MapKit for structured airport locations and
+  cross-timezone flight events
 
 ## Install
 
