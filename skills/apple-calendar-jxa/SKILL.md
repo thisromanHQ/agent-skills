@@ -214,8 +214,9 @@ same `osascript -l JavaScript <<'EOF'` heredoc as the helper definitions.
 ## EventKit Travel Mode (Opt-In)
 
 Use this mode only when the user explicitly wants Calendar-style travel event
-metadata, such as separate departure and arrival time zones or a map-backed
-airport location. The stable Calendar.app JXA workflow remains the default.
+metadata, such as separate departure and arrival time zones or a best-effort
+map-backed airport location. The stable Calendar.app JXA workflow remains the
+default.
 
 EventKit is a separate authorization boundary. A process may have write-only
 access, full access, or no access. Write-only access can create an event only in
@@ -257,7 +258,11 @@ function mapItemForAirport(query) {
     let failure = null;
     search.startWithCompletionHandler((response, error) => {
         try {
-            if (error) throw new Error(ObjC.unwrap(error.localizedDescription));
+            if (!response) {
+                let message = `Airport lookup failed: ${query}`;
+                try { message = ObjC.unwrap(error.localizedDescription) || message; } catch (_) {}
+                throw new Error(message);
+            }
             if (Number(response.mapItems.count) === 0) throw new Error(`Airport not found: ${query}`);
             result = response.mapItems.objectAtIndex(0);
         } catch (error) {
@@ -320,7 +325,11 @@ function airportMapItem(query) {
     let failure = null;
     search.startWithCompletionHandler((response, error) => {
         try {
-            if (error) throw new Error(ObjC.unwrap(error.localizedDescription));
+            if (!response) {
+                let message = `Airport lookup failed: ${query}`;
+                try { message = ObjC.unwrap(error.localizedDescription) || message; } catch (_) {}
+                throw new Error(message);
+            }
             if (Number(response.mapItems.count) === 0) throw new Error(`Airport not found: ${query}`);
             result = response.mapItems.objectAtIndex(0);
         } catch (error) { failure = String(error); }
@@ -368,12 +377,18 @@ event.URL = $.NSURL.URLWithString(`http://maps.apple.com/?saddr=${encodeURICompo
 event.notes = `Departure: ${departureLocal} (${departureZoneName})\nArrival: ${arrivalLocal} (${arrivalZoneName})\nMap: ${ObjC.unwrap(event.URL.absoluteString)}`;
 let error = null;
 if (!store.saveEventSpanError(event, 0, error)) throw new Error("EventKit save returned false");
-JSON.stringify({status: "success", id: ObjC.unwrap(event.eventIdentifier), title, startISO, endISO, departureZoneName, arrivalZoneName, structuredLocation: true}, null, 2);
+const identifier = ObjC.unwrap(event.eventIdentifier);
+const saved = store.eventWithIdentifier(identifier);
+if (!saved || !saved.structuredLocation) throw new Error("Saved event has no structured location");
+JSON.stringify({status: "success", id: identifier, title, startISO, endISO, departureZoneName, arrivalZoneName, structuredLocation: true}, null, 2);
 EOF
 ```
 
-The example intentionally stores the departure airport as the event's
-structured location and includes the complete route as an Apple Maps URL. If
-the user wants the arrival airport embedded in Calendar's location card too,
-create a second event or ask them to select the arrival location manually; one
-event has one public structured location.
+The example stores the departure airport as the event's structured location and
+includes the complete route as an Apple Maps URL. Verify the saved event's
+structured location after saving. If a calendar provider rejects the structured
+location, report the save failure and do not claim that the map was created.
+Retry only with explicit user approval, using the plain airport text, URL, and
+local times in the notes. If the user wants the arrival airport embedded in
+Calendar's location card too, create a second event or ask them to select the
+arrival location manually; one event has one public structured location.
