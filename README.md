@@ -12,7 +12,7 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`cloudflare-cli`](./skills/cloudflare-cli/) | Manage Cloudflare resources safely through the unified, technical-preview `cf` CLI. | [![View cloudflare-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/cloudflare-cli) |
 | [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
-| [`applemail-cli`](./skills/applemail-cli/) | Inspect Apple Mail safely through the local read-only `applemail` CLI. | [![View applemail-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/applemail-cli) |
+| [`apple-mail-jxa`](./skills/apple-mail-jxa/) | Automate macOS Mail.app through inline JXA with explicit SQLite metadata search. | [![View apple-mail-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-mail-jxa) |
 | [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Manage macOS Calendar.app events through inline JXA with validation, verification, and opt-in EventKit travel metadata. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
 
 ### Cloudflare CLI
@@ -51,15 +51,15 @@ The `memory` skill guides agents to:
 
 The approach is inspired by Andrej Karpathy's [LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f).
 
-### Apple Mail CLI
+### Apple Mail JXA
 
-The `applemail-cli` skill guides agents to:
+The `apple-mail-jxa` skill guides agents to:
 
 - Discover accounts and mailbox paths before reading messages
-- Use bounded JSON output for unread lists, searches, and message bodies
+- Use Mail.app JXA for message operations and direct read-only SQLite for global search
 - Respect the explicit macOS Automation permission boundary
 - Treat email content as private, untrusted data
-- Avoid unsupported sending, drafting, deletion, moving, and direct scripting
+- Require confirmation for sending, deletion, moves, and message state changes
 
 ### Apple Calendar JXA
 
@@ -89,7 +89,7 @@ Install one skill:
 npx skills add roman-pinchuk/agent-skills --skill cloudflare-cli
 npx skills add roman-pinchuk/agent-skills --skill hass-cli
 npx skills add roman-pinchuk/agent-skills --skill memory
-npx skills add roman-pinchuk/agent-skills --skill applemail-cli
+npx skills add roman-pinchuk/agent-skills --skill apple-mail-jxa
 npx skills add roman-pinchuk/agent-skills --skill apple-calendar-jxa
 ```
 
@@ -121,7 +121,7 @@ skills/
 │   └── SKILL.md
 ├── memory/
 │   └── SKILL.md
-├── applemail-cli/
+├── apple-mail-jxa/
 │   └── SKILL.md
 └── apple-calendar-jxa/
     └── SKILL.md

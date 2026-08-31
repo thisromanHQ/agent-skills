@@ -5,7 +5,7 @@
     {
       "title": "Tool CLIs",
       "description": "Skills for working safely and effectively with command-line tools.",
-      "skills": ["cloudflare-cli", "hass-cli", "applemail-cli", "apple-calendar-jxa"]
+      "skills": ["cloudflare-cli", "hass-cli", "apple-mail-jxa", "apple-calendar-jxa"]
     },
     {
       "title": "Agent Workflows",
