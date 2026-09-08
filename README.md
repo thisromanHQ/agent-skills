@@ -67,9 +67,12 @@ The `apple-calendar-jxa` skill guides agents to:
 
 - Discover calendars without relying on unsupported calendar IDs
 - Read bounded event windows using strict UTC ISO 8601 timestamps
+- Search event metadata globally or by exact calendar name through read-only SQLite
 - Create, update, and delete events through inline JXA heredocs
 - Resolve exact calendar names and reject ambiguous or missing calendars
 - Verify Calendar.app mutations and handle macOS Automation permissions
+- Resolve SQLite search candidates through Calendar.app before detailed reads or mutations
+- Keep series search separate from recurrence-aware agendas and occurrence edits
 - Optionally use EventKit and MapKit for structured airport locations and
   cross-timezone flight events
 
