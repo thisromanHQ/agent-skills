@@ -13,7 +13,7 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
 | [`apple-mail-jxa`](./skills/apple-mail-jxa/) | Automate macOS Mail.app through inline JXA with explicit SQLite metadata search. | [![View apple-mail-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-mail-jxa) |
-| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Manage macOS Calendar.app events through inline JXA with validation, verification, and opt-in EventKit travel metadata. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
+| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Read fast EventKit agendas, search metadata with SQLite, and manage Calendar.app events through inline JXA. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
 
 ### Cloudflare CLI
 
@@ -66,13 +66,15 @@ The `apple-mail-jxa` skill guides agents to:
 The `apple-calendar-jxa` skill guides agents to:
 
 - Discover calendars without relying on unsupported calendar IDs
-- Read bounded event windows using strict UTC ISO 8601 timestamps
+- Fetch recurrence-aware agendas across selected calendars in one public EventKit query
+- Use local date boundaries and explicit timezones, preserving all-day dates
 - Search event metadata globally or by exact calendar name through read-only SQLite
 - Create, update, and delete events through inline JXA heredocs
 - Resolve exact calendar names and reject ambiguous or missing calendars
 - Verify Calendar.app mutations and handle macOS Automation permissions
 - Resolve SQLite search candidates through Calendar.app before detailed reads or mutations
 - Keep series search separate from recurrence-aware agendas and occurrence edits
+- Check EventKit full access once and stop on denial or timeout instead of scanning calendars
 - Optionally use EventKit and MapKit for structured airport locations and
   cross-timezone flight events
 
