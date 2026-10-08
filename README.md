@@ -34,6 +34,7 @@ The `hass-cli` skill covers:
 
 - Safe discovery of states, services, devices, areas, and events
 - Service calls, templates, raw API requests, and Home Assistant OS commands
+- REST and WebSocket inspection through `raw`, including parseable Lovelace queries
 - `HASS_SERVER`, `HASS_TOKEN`, and supervisor access handling
 - Parseable JSON and YAML output
 - Confirmation and verification around state-changing operations

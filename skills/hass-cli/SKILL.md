@@ -4,7 +4,7 @@ description: Use when working with the Home Assistant CLI (`hass-cli`) to inspec
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.0.1"
+  version: "1.0.2"
   repository: https://github.com/roman-pinchuk/agent-skills
 ---
 
@@ -24,7 +24,7 @@ Do not use this skill for the separate `ha` command-line tool unless the user sp
 - Do not read, print, dump, or expose environment variables. Avoid commands such as `env`, `printenv`, `export`, `set`, `declare`, or `echo $HASS_TOKEN`. Never inspect token values directly.
 - When checking Home Assistant access, run `hass-cli` commands and report success or sanitized errors. If authentication appears missing, ask the user to confirm that `HASS_SERVER`, `HASS_TOKEN`, or `HASS_SUPERVISOR_TOKEN` are set without revealing their values.
 - Prefer read-only discovery commands before making changes.
-- Ask for confirmation before commands that change state, call services, update/delete areas, assign devices, create backups, update Home Assistant Core, or use `raw` endpoints with non-GET behavior.
+- Ask for confirmation before commands that change state, call services, update/delete areas, assign devices, create backups, update Home Assistant Core, or use `raw` endpoints and WebSocket commands that mutate data. Read-only `raw get` and `raw ws` requests can be used for inspection.
 - Avoid `--insecure` unless the user explicitly accepts connecting with ignored TLS certificate validation.
 - Use `--output=json` or `--output=yaml` for data that will be parsed or summarized.
 
@@ -51,6 +51,10 @@ Before composing a command:
 Global options such as `--output`, `--columns`, `--sort-by`, and `--no-headers` normally belong before the command group, for example `hass-cli --output=json state list`. If the command's help shows a different placement, follow that help.
 
 If the CLI reports an unknown command, option, or argument, stop and inspect the relevant help output. Do not retry by guessing a spelling, changing option placement, or substituting a command from another CLI. Report the installed version and sanitized error if the supported syntax is still unclear.
+
+Use the installed `hass-cli` executable as the primary interface. Do not import
+`homeassistant_cli.cli.run`, replace `sys.argv`, or hardcode a package-manager
+path unless the executable has a demonstrated runtime compatibility failure.
 
 ## Common Commands
 
@@ -96,6 +100,43 @@ hass-cli template --local lovelace-template.yaml
 hass-cli raw get /api/
 ```
 
+The `raw ws` command sends a Home Assistant WebSocket request. Confirm its
+syntax with `hass-cli raw ws --help` before use. For example, inspecting the
+Lovelace configuration and selecting PS5 cards is read-only:
+
+```bash
+hass-cli --output=json raw ws lovelace/config \
+  --json='{"url_path":"lovelace","force":false}' |
+  jq '[.result.views[].sections[]?
+       | select(.type == "custom:ps5-card")
+       | {type, name, power_entity, activity_entity}]'
+```
+
+Treat other WebSocket types according to their actual effect. A WebSocket
+transport is not inherently a state change, but a command that creates,
+updates, or deletes Home Assistant data requires confirmation and post-change
+verification.
+
+## Runtime Compatibility Fallbacks
+
+If the public executable fails with an asyncio error such as `There is no
+current event loop in thread`, capture the installed `hass-cli --version`,
+Python version, and sanitized traceback before trying a workaround. This can
+occur with older CLI releases on newer Python versions.
+
+Only after confirming that specific failure, use the Python interpreter from
+the same installed CLI environment and initialize an event loop before calling
+the CLI entry point. Do not copy a machine-specific Homebrew Cellar path:
+
+```bash
+CLI_PYTHON=/path/to/the/cli-environment/bin/python
+"$CLI_PYTHON" -c 'import asyncio,sys; asyncio.set_event_loop(asyncio.new_event_loop()); from homeassistant_cli.cli import run; sys.argv=["hass-cli", "--output=json", "raw", "ws", "lovelace/config", "--json", "{\"url_path\":\"lovelace\",\"force\":false}"]; run()'
+```
+
+Prefer upgrading `homeassistant-cli` or correcting its supported runtime when
+possible. Keep the fallback limited to the failing command, and do not use it
+to bypass authentication, TLS, host validation, or confirmation requirements.
+
 ## Workflow
 
 1. Identify whether the task is inspection, automation, configuration, or administration.
@@ -119,7 +160,7 @@ hass-cli raw get /api/
 - `integration`: inspect and operate on config entries.
 - `map`: open the Home Assistant location or entity location on a map.
 - `template`: render templates on the server or locally.
-- `raw`: call Home Assistant API endpoints directly; treat as advanced and confirm before modifying calls.
+- `raw`: call REST and WebSocket API endpoints directly; use live help, classify each request as read-only or mutating, and confirm before modifying calls.
 - `ha`: Home Assistant Operating System commands for supervisor/core operations; requires supervisor token access.
 
 ## Notes
