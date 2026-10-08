@@ -14,6 +14,7 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
 | [`apple-mail-jxa`](./skills/apple-mail-jxa/) | Automate macOS Mail.app through inline JXA with explicit SQLite metadata search. | [![View apple-mail-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-mail-jxa) |
 | [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Read fast EventKit agendas, search metadata with SQLite, and manage Calendar.app events through inline JXA. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
+| [`ssh`](./skills/ssh/) | Connect to remote machines and run bounded, non-interactive OpenSSH commands safely. | [![View ssh installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/ssh) |
 
 ### Cloudflare CLI
 
@@ -78,6 +79,16 @@ The `apple-calendar-jxa` skill guides agents to:
 - Optionally use EventKit and MapKit for structured airport locations and
   cross-timezone flight events
 
+### SSH
+
+The `ssh` skill guides agents to:
+
+- Use SSH config aliases, hostnames, IP addresses, existing identities, and jump hosts
+- Run bounded, non-interactive commands without unnecessary TTY allocation
+- Preserve host-key verification and avoid password automation
+- Quote remote commands safely and run short scripts over standard input
+- Handle exit statuses, privilege escalation, timeouts, and transport failures
+
 ## Install
 
 ### skills.sh
@@ -96,6 +107,7 @@ npx skills add roman-pinchuk/agent-skills --skill hass-cli
 npx skills add roman-pinchuk/agent-skills --skill memory
 npx skills add roman-pinchuk/agent-skills --skill apple-mail-jxa
 npx skills add roman-pinchuk/agent-skills --skill apple-calendar-jxa
+npx skills add roman-pinchuk/agent-skills --skill ssh
 ```
 
 ### opencode
@@ -128,7 +140,9 @@ skills/
 │   └── SKILL.md
 ├── apple-mail-jxa/
 │   └── SKILL.md
-└── apple-calendar-jxa/
+├── apple-calendar-jxa/
+│   └── SKILL.md
+└── ssh/
     └── SKILL.md
 LICENSE
 README.md
