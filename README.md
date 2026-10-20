@@ -1,7 +1,7 @@
 # Agent Skills
 
-[![skills.sh collection installs](https://skills.sh/b/roman-pinchuk/agent-skills)](https://skills.sh/roman-pinchuk/agent-skills)
-[![Validate skills](https://github.com/roman-pinchuk/agent-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/roman-pinchuk/agent-skills/actions/workflows/validate.yml)
+[![skills.sh collection installs](https://skills.sh/b/thisromanHQ/agent-skills)](https://skills.sh/thisromanHQ/agent-skills)
+[![Validate skills](https://github.com/thisromanHQ/agent-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/thisromanHQ/agent-skills/actions/workflows/validate.yml)
 
 A collection of reusable skills for AI coding agents. Each skill follows the [Agent Skills](https://agentskills.io/) format and can be installed independently or as part of the collection.
 
@@ -9,12 +9,12 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 
 | Skill | Description | Stats |
 | --- | --- | --- |
-| [`cloudflare-cli`](./skills/cloudflare-cli/) | Manage Cloudflare resources safely through the unified, technical-preview `cf` CLI. | [![View cloudflare-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/cloudflare-cli) |
-| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/hass-cli) |
-| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/memory) |
-| [`apple-mail-jxa`](./skills/apple-mail-jxa/) | Automate macOS Mail.app through inline JXA with explicit SQLite metadata search. | [![View apple-mail-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-mail-jxa) |
-| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Read fast EventKit agendas, search metadata with SQLite, and manage Calendar.app events through inline JXA. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/apple-calendar-jxa) |
-| [`ssh`](./skills/ssh/) | Connect to remote machines and run bounded, non-interactive OpenSSH commands safely. | [![View ssh installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/roman-pinchuk/agent-skills/ssh) |
+| [`cloudflare-cli`](./skills/cloudflare-cli/) | Manage Cloudflare resources safely through the unified, technical-preview `cf` CLI. | [![View cloudflare-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/cloudflare-cli) |
+| [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/hass-cli) |
+| [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/memory) |
+| [`apple-mail-jxa`](./skills/apple-mail-jxa/) | Automate macOS Mail.app through inline JXA with explicit SQLite metadata search. | [![View apple-mail-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/apple-mail-jxa) |
+| [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Read fast EventKit agendas, search metadata with SQLite, and manage Calendar.app events through inline JXA. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/apple-calendar-jxa) |
+| [`ssh`](./skills/ssh/) | Connect to remote machines and run bounded, non-interactive OpenSSH commands safely. | [![View ssh installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/ssh) |
 
 ### Cloudflare CLI
 
@@ -97,18 +97,18 @@ The `ssh` skill guides agents to:
 Install the collection:
 
 ```bash
-npx skills add roman-pinchuk/agent-skills
+npx skills add thisromanHQ/agent-skills
 ```
 
 Install one skill:
 
 ```bash
-npx skills add roman-pinchuk/agent-skills --skill cloudflare-cli
-npx skills add roman-pinchuk/agent-skills --skill hass-cli
-npx skills add roman-pinchuk/agent-skills --skill memory
-npx skills add roman-pinchuk/agent-skills --skill apple-mail-jxa
-npx skills add roman-pinchuk/agent-skills --skill apple-calendar-jxa
-npx skills add roman-pinchuk/agent-skills --skill ssh
+npx skills add thisromanHQ/agent-skills --skill cloudflare-cli
+npx skills add thisromanHQ/agent-skills --skill hass-cli
+npx skills add thisromanHQ/agent-skills --skill memory
+npx skills add thisromanHQ/agent-skills --skill apple-mail-jxa
+npx skills add thisromanHQ/agent-skills --skill apple-calendar-jxa
+npx skills add thisromanHQ/agent-skills --skill ssh
 ```
 
 ### opencode
@@ -116,14 +116,14 @@ npx skills add roman-pinchuk/agent-skills --skill ssh
 Clone the repository into an opencode skills directory:
 
 ```bash
-git clone https://github.com/roman-pinchuk/agent-skills.git ~/.config/opencode/skills/roman-pinchuk-agent-skills
+git clone https://github.com/thisromanHQ/agent-skills.git ~/.config/opencode/skills/thisromanHQ-agent-skills
 ```
 
 For a project-local installation:
 
 ```bash
 mkdir -p .opencode/skills
-git clone https://github.com/roman-pinchuk/agent-skills.git .opencode/skills/roman-pinchuk-agent-skills
+git clone https://github.com/thisromanHQ/agent-skills.git .opencode/skills/thisromanHQ-agent-skills
 ```
 
 Restart opencode after cloning so it discovers the `SKILL.md` files recursively.

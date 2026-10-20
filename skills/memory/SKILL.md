@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: roman-pinchuk
   version: "1.0.1"
-  repository: https://github.com/roman-pinchuk/agent-skills
+  repository: https://github.com/thisromanHQ/agent-skills
 ---
 
 # Project Memory
