@@ -522,9 +522,57 @@ files, download attachments, or send the draft as part of this operation.
 
 After the user confirms the exact, independently verified draft:
 
+**Important object distinction:** `mail.outgoingMessages` and a message read
+from the account's `Drafts` mailbox are different Apple Mail object types and
+ID namespaces. Use the outgoing compose object for `mail.send()`. A saved
+Drafts-mailbox message is suitable for read-back only; passing it to
+`mail.send()` can fail with `Message not understood (-1708)`. Resolve the
+outgoing object again immediately before sending rather than reusing a saved
+mailbox message or a stale object.
+
 ```javascript
-const approvedSubject = draft.subject();
-const accepted = mail.send(draft);
+const approvedSubject = APPROVED_SUBJECT_JSON;
+const outgoing = mail.outgoingMessages().filter(message =>
+    String(message.subject()) === approvedSubject
+);
+if (outgoing.length !== 1) {
+    throw new Error("Expected exactly one approved outgoing draft; do not retry sending");
+}
+const sendDraft = outgoing[0];
+const approved = {
+    sender: APPROVED_SENDER_JSON,
+    to: APPROVED_TO_ARRAY_JSON,
+    cc: APPROVED_CC_ARRAY_JSON,
+    bcc: APPROVED_BCC_ARRAY_JSON,
+    subject: approvedSubject,
+    content: APPROVED_CONTENT_JSON
+};
+function address(value) {
+    const match = String(value).match(/<([^<>]+)>\s*$/);
+    return match ? match[1] : String(value);
+}
+const beforeSend = {
+    sender: address(sendDraft.sender()),
+    to: sendDraft.toRecipients().map(recipient => String(recipient.address())),
+    cc: sendDraft.ccRecipients().map(recipient => String(recipient.address())),
+    bcc: sendDraft.bccRecipients().map(recipient => String(recipient.address())),
+    subject: String(sendDraft.subject()),
+    content: String(sendDraft.content())
+};
+if (beforeSend.sender !== approved.sender ||
+    JSON.stringify(beforeSend.to) !== JSON.stringify(approved.to) ||
+    JSON.stringify(beforeSend.cc) !== JSON.stringify(approved.cc) ||
+    JSON.stringify(beforeSend.bcc) !== JSON.stringify(approved.bcc) ||
+    beforeSend.subject !== approved.subject ||
+    beforeSend.content !== approved.content) {
+    throw new Error("Outgoing draft changed after approval; do not send");
+}
+let accepted;
+try {
+    accepted = mail.send(sendDraft);
+} catch (error) {
+    throw new Error("Send outcome is unconfirmed; inspect Mail/Sent before retrying");
+}
 emit({status: accepted ? "send_requested" : "send_not_confirmed", subject: approvedSubject});
 ```
 
@@ -532,9 +580,12 @@ Immediately before sending, resolve the approved outgoing draft again and
 compare its sender, recipients, subject, content, and requested attachments
 with the approved values; stop if anything changed. Capture display fields
 before sending because the outgoing object may disappear afterward. A true
-send return value does not establish delivery: independently locate the Sent
-copy and recipient's received copy when authorized, compare Message-IDs and
-fields, and report delivery as unverified until that evidence is available.
+send return value does not establish delivery. Independently locate the Sent
+copy using a bounded, fresh lookup. If sending throws or returns false, do not
+immediately retry: the outcome is unconfirmed, so inspect the outgoing window,
+Drafts, and Sent first. A matching Sent copy confirms local submission, not
+recipient delivery. Locate the recipient's received copy only when authorized;
+otherwise report delivery as unverified.
 For replies, inspect the selected message's source to check that it references
 the original Message-ID; a `Re:` subject alone does not prove threading.
 
