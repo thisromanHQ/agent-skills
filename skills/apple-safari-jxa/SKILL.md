@@ -4,7 +4,7 @@ description: Control regular macOS Safari through inline AppleScript and JavaScr
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.1.0"
+  version: "1.2.0"
   repository: https://github.com/thisromanHQ/agent-skills
 ---
 
@@ -62,6 +62,11 @@ authorized. The harmless probe is the permission boundary.
 - Never print cookies, local storage, passwords, tokens, or full private pages.
 - Ask for confirmation immediately before posting, sending, purchasing,
   deleting, changing account settings, or submitting a consequential form.
+- Do not use `System Events`, simulated keystrokes, mouse automation, or
+  clipboard-based keyboard fallbacks without explicit user approval. These can
+  trigger iTerm2/OpenCode Accessibility, Device Control, or Data Access
+  permission prompts. Prefer page JavaScript; stop and explain the permission
+  boundary if it is unavailable.
 - Verify every mutation in the same tab.
 - A non-zero `osascript` exit status means the operation was not confirmed.
 - Never retry a mutation when the result is uncertain. Re-read the page first.
@@ -173,6 +178,18 @@ end tell
 APPLESCRIPT
 ```
 
+## Wait for Page Controls
+
+`document.readyState === "complete"` only indicates that the document finished
+loading; client-rendered controls may still be absent. For an interaction, poll
+for the exact expected control (prefer an accessible label or a recipient/page
+identifier) and fail if it does not appear within a bounded timeout. Never
+click the first matching generic button on a page.
+
+When a site uses links as buttons, inspect both `button` and `a` elements (and
+their `aria-label` values). LinkedIn, for example, renders Connect and Message
+actions as accessible links in some views.
+
 ## Read and Interact
 
 Prefer visible labels and accessible attributes over generated CSS classes.
@@ -190,7 +207,33 @@ APPLESCRIPT
 
 For a contenteditable editor, insert text and dispatch an input event. Build
 the page script with JXA's `JSON.stringify` so the text is a valid JavaScript
-string literal.
+string literal. After insertion, re-read the editor and require an exact match
+before enabling or clicking Submit.
+
+Some React/contenteditable editors ignore `execCommand` and synthetic HTML
+assignment. A page-level paste event can work without requesting Accessibility
+permission:
+
+```javascript
+const editor = document.querySelector('[contenteditable="true"]');
+const text = "Message text";
+editor.focus();
+const transfer = new DataTransfer();
+transfer.setData("text/plain", text);
+editor.dispatchEvent(new ClipboardEvent("paste", {
+  bubbles: true,
+  clipboardData: transfer
+}));
+editor.dispatchEvent(new InputEvent("input", {
+  bubbles: true,
+  inputType: "insertFromPaste",
+  data: text
+}));
+```
+
+This is site-dependent: verify `editor.innerText` and the enabled state of the
+submit control. Do not fall back to `System Events` automatically when it does
+not work.
 
 ```bash
 osascript -l JavaScript <<'EOF'
@@ -207,6 +250,28 @@ After filling, re-read the editor and locate the submit control by its visible
 label or accessible name. Click only after the user has approved the exact
 content. Verify a success alert, a new visible item, or another site-specific
 success indicator. A cleared editor alone is not sufficient proof.
+
+## LinkedIn-specific Guidance
+
+- Treat LinkedIn profile actions as mutations. Get confirmation immediately
+  before sending a connection request, message, or invitation.
+- Locate the exact recipient by profile URL and accessible label, such as
+  `Invite <name> to connect`; do not use a generic Connect control from a
+  recommendation card.
+- Connection invitations with notes have account-level limits and commonly a
+  200-character limit. Check for the personalized-invitation quota and the
+  actual character count before filling the note. If the quota is zero, do not
+  silently send without a note; ask whether that change is acceptable.
+- LinkedIn compose flows may move from a profile URL to `/messaging/compose/`,
+  `/messaging/thread/new/`, and finally a conversation URL. Keep the exact tab
+  reference, re-check the current URL after navigation, and do not assume the
+  first compose URL is the final conversation.
+- Verify a sent message in the resulting conversation, including the sender,
+  recipient, message text, and timestamp. A click, a cleared editor, or a
+  visible draft is not proof of delivery.
+- If a mutation errors or its result is uncertain, stop and re-read the page
+  before retrying; never retry blindly because duplicate requests/messages are
+  consequential.
 
 ## Screenshots and Privacy
 
