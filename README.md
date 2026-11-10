@@ -16,6 +16,7 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`apple-calendar-jxa`](./skills/apple-calendar-jxa/) | Read fast EventKit agendas, search metadata with SQLite, and manage Calendar.app events through inline JXA. | [![View apple-calendar-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/apple-calendar-jxa) |
 | [`apple-safari-jxa`](./skills/apple-safari-jxa/) | Control regular Safari through inline AppleScript and JavaScript while preserving existing authenticated sessions. | [![View apple-safari-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/apple-safari-jxa) |
 | [`ssh`](./skills/ssh/) | Connect to remote machines and run bounded, non-interactive OpenSSH commands safely. | [![View ssh installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/ssh) |
+| [`camofox-browser`](./skills/camofox-browser/) | Operate local or remote Camofox anti-detection browser deployments with profile-aware API authentication. | [![View camofox-browser installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/camofox-browser) |
 
 ### Cloudflare CLI
 
@@ -102,6 +103,20 @@ The `ssh` skill guides agents to:
 - Quote remote commands safely and run short scripts over standard input
 - Handle exit statuses, privilege escalation, timeouts, and transport failures
 
+### Camofox Browser
+
+The `camofox-browser` skill supports configured local and remote Camofox REST
+servers. Keep endpoints in `~/.camofox-browser/config.json` or a project-local
+`.camofox-browser/config.json`, and export only the selected profile's API key
+before launching the agent:
+
+```bash
+export CAMOFOX_REMOTE_API_KEY='...'
+```
+
+The skill fails closed when the selected profile or credential is missing. It
+does not launch a browser server automatically or require bundled scripts.
+
 ## Install
 
 ### skills.sh
@@ -122,6 +137,7 @@ npx skills add thisromanHQ/agent-skills --skill apple-mail-jxa
 npx skills add thisromanHQ/agent-skills --skill apple-calendar-jxa
 npx skills add thisromanHQ/agent-skills --skill apple-safari-jxa
 npx skills add thisromanHQ/agent-skills --skill ssh
+npx skills add thisromanHQ/agent-skills --skill camofox-browser
 ```
 
 ### opencode
