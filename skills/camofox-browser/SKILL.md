@@ -32,9 +32,15 @@ Read `references/configuration.md` for profile resolution. Before any request:
    and exported credential, stop and explain the required setup.
 4. Treat `.env` as optional data, never as shell code. Do not print, echo, or
    paste API keys. Do not ask users to send secrets in chat.
-5. Check `<apiUrl>/health` before creating tabs. Send the bearer token on every
-   protected request. A 401/403 is an authentication failure: stop, report it,
-   and do not retry without authentication or switch servers silently.
+5. Check `<apiUrl>/health` before creating tabs. Use the Camofox CLI or
+   authenticated `curl` for REST requests; do not use Python HTTP clients for
+   Camofox operations. Send the bearer token on every protected request.
+   Require a successful HTTP response and a valid health payload (normally
+   `ok: true` and `running: true`). If another client reports an error, verify
+   once with the documented `curl` request before diagnosing authentication.
+   Classify 401/403 only after inspecting the status, response body, and server
+   headers: a proxy-generated 403 is not by itself proof of invalid credentials.
+   Do not retry consequential actions or switch servers silently.
 6. If project configuration changes an inherited endpoint, obtain explicit
    approval before forwarding an inherited credential to that origin.
 7. Allow unauthenticated HTTP only for localhost and only when the user clearly
