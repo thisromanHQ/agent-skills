@@ -4,7 +4,7 @@ description: Use when working with the Home Assistant CLI (`hass-cli`) to inspec
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.0.2"
+  version: "1.0.3"
   repository: https://github.com/thisromanHQ/agent-skills
 ---
 
@@ -52,9 +52,7 @@ Global options such as `--output`, `--columns`, `--sort-by`, and `--no-headers` 
 
 If the CLI reports an unknown command, option, or argument, stop and inspect the relevant help output. Do not retry by guessing a spelling, changing option placement, or substituting a command from another CLI. Report the installed version and sanitized error if the supported syntax is still unclear.
 
-Use the installed `hass-cli` executable as the primary interface. Do not import
-`homeassistant_cli.cli.run`, replace `sys.argv`, or hardcode a package-manager
-path unless the executable has a demonstrated runtime compatibility failure.
+Use the installed `hass-cli` executable directly. Do not import `homeassistant_cli.cli.run`, replace `sys.argv`, or hardcode a package-manager path unless the executable has a confirmed runtime compatibility failure.
 
 ## Common Commands
 
@@ -82,7 +80,7 @@ hass-cli state edit sensor.test --json='{ "state": "off" }'
 
 `service call` invokes Home Assistant behavior and is the normal way to control a physical device. `state edit` writes an entity state representation and is not a replacement for turning a light, switch, climate device, or other physical entity on or off. Use `state edit` only when the user explicitly needs to alter an entity state and the exact command help confirms the intended behavior.
 
-Formatting and filtering:
+## Formatting and filtering
 
 ```bash
 hass-cli --output=json state get light.example
@@ -92,7 +90,7 @@ hass-cli --columns=ENTITY=entity_id,STATE=state state list light
 hass-cli --sort-by last_changed state history --since 50m light.kitchen
 ```
 
-Templates and raw API:
+## Templates and raw API
 
 ```bash
 hass-cli template motionlight.yaml.j2 motiondata.yaml
@@ -100,42 +98,31 @@ hass-cli template --local lovelace-template.yaml
 hass-cli raw get /api/
 ```
 
-The `raw ws` command sends a Home Assistant WebSocket request. Confirm its
-syntax with `hass-cli raw ws --help` before use. For example, inspecting the
-Lovelace configuration and selecting PS5 cards is read-only:
+The `raw ws` command sends a Home Assistant WebSocket request. Confirm its syntax with `hass-cli raw ws --help` before use. For example, inspecting the Lovelace configuration and selecting PS5 cards is read-only:
 
 ```bash
 hass-cli --output=json raw ws lovelace/config \
   --json='{"url_path":"lovelace","force":false}' |
-  jq '[.result.views[].sections[]?
+  jq '[.result.views[].sections[]?.cards[]?
        | select(.type == "custom:ps5-card")
        | {type, name, power_entity, activity_entity}]'
 ```
 
-Treat other WebSocket types according to their actual effect. A WebSocket
-transport is not inherently a state change, but a command that creates,
-updates, or deletes Home Assistant data requires confirmation and post-change
-verification.
+Treat other WebSocket types according to their actual effect. A WebSocket transport is not inherently a state change, but a command that creates, updates, or deletes Home Assistant data requires confirmation and post-change verification.
 
 ## Runtime Compatibility Fallbacks
 
-If the public executable fails with an asyncio error such as `There is no
-current event loop in thread`, capture the installed `hass-cli --version`,
-Python version, and sanitized traceback before trying a workaround. This can
-occur with older CLI releases on newer Python versions.
+Use the installed `hass-cli` executable directly for normal commands. Do not wrap every invocation in Python or import `homeassistant_cli.cli.run` merely to parse output or run a test; use `--output=json` and tools such as `jq` instead.
 
-Only after confirming that specific failure, use the Python interpreter from
-the same installed CLI environment and initialize an event loop before calling
-the CLI entry point. Do not copy a machine-specific Homebrew Cellar path:
+If the executable fails with an asyncio error such as `There is no current event loop in thread`, capture the installed `hass-cli --version`, Python version, and sanitized traceback before trying a workaround. Confirm that the failure is caused by the known Python 3.14 incompatibility.
 
-```bash
-CLI_PYTHON=/path/to/the/cli-environment/bin/python
-"$CLI_PYTHON" -c 'import asyncio,sys; asyncio.set_event_loop(asyncio.new_event_loop()); from homeassistant_cli.cli import run; sys.argv=["hass-cli", "--output=json", "raw", "ws", "lovelace/config", "--json", "{\"url_path\":\"lovelace\",\"force\":false}"]; run()'
-```
+Prefer these options in order:
 
-Prefer upgrading `homeassistant-cli` or correcting its supported runtime when
-possible. Keep the fallback limited to the failing command, and do not use it
-to bypass authentication, TLS, host validation, or confirmation requirements.
+1. Upgrade `homeassistant-cli` to a release containing the upstream fix.
+2. If no fixed release is available, use a supported Python runtime such as Python 3.13 in an isolated environment.
+3. If the user explicitly approves a local patch, inspect the installed `homeassistant_cli/remote.py` and compare it with upstream fix #457 before editing. Patch only the `wsapi` implementation, replacing `asyncio.get_event_loop()` plus `run_until_complete(fetcher())` with `asyncio.run(fetcher())`. Tell the user that package upgrades may overwrite the patch and verify the executable directly afterward.
+
+The upstream fix is tracked in `home-assistant-ecosystem/home-assistant-cli#457`. Do not use a Python wrapper or local patch to bypass authentication, TLS, host validation, or confirmation requirements. Keep any compatibility workaround limited to the failing CLI.
 
 ## Workflow
 
@@ -152,7 +139,7 @@ to bypass authentication, TLS, host validation, or confirmation requirements.
 
 - `config`: configuration and release information.
 - `state`: list, inspect, edit, and view history for entity states.
-- `service`: list and call Home Assistant services.
+- `service`: list and call services.
 - `area`: list, create, and delete areas.
 - `device`: list devices and assign devices to areas.
 - `entity`: inspect entity registry data.
@@ -160,8 +147,8 @@ to bypass authentication, TLS, host validation, or confirmation requirements.
 - `integration`: inspect and operate on config entries.
 - `map`: open the Home Assistant location or entity location on a map.
 - `template`: render templates on the server or locally.
-- `raw`: call REST and WebSocket API endpoints directly; use live help, classify each request as read-only or mutating, and confirm before modifying calls.
-- `ha`: Home Assistant Operating System commands for supervisor/core operations; requires supervisor token access.
+- `raw`: call the raw REST and WebSocket APIs; classify requests as read-only or mutating.
+- `ha`: Home Assistant Operating System commands for Supervisor/Core operations; requires supervisor token access.
 
 ## Notes
 
