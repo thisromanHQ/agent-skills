@@ -23,9 +23,11 @@ unrelated parent projects. Keep `.env` files mode `0600` and ignore project
 Camofox server's deployment `.env`.
 
 When operating through an agent, perform these checks before making a request:
-resolve the selected profile, verify its endpoint, and verify the selected API
-key is available. If configuration or credentials are missing, stop and ask the
-user to configure them. Do not launch a server automatically. An explicitly
+resolve the selected profile, verify its endpoint, and resolve the first
+non-empty value for the selected API key from the applicable credential sources.
+A missing project configuration is normal when user configuration exists. If
+the credential is absent after all sources have been checked, stop and ask the
+user to configure it. Do not launch a server automatically. An explicitly
 unauthenticated localhost request should be allowed only when the user clearly
 requests that exception.
 
@@ -58,8 +60,12 @@ name `CAMOFOX_API_KEY`, that is the selected variable and is valid.
 
 If a dotenv file is used, support only simple `KEY=VALUE` lines and comments;
 do not execute shell syntax, command substitutions, or variable interpolation.
-Prefer an already-exported variable over a file value and never display the
-resolved value.
+For the selected profile's `apiKeyEnv`, use the first non-empty value from an
+already-exported variable, the nearest project's `.camofox-browser/.env`, or
+the user's `~/.camofox-browser/.env`, in that order. An empty value counts as
+missing and resolution continues to the next source. The user file is
+therefore a valid credential source even when the project has no
+`.camofox-browser/` directory. Never display the resolved value.
 
 ## Resolution and request flow
 
@@ -69,10 +75,12 @@ resolved value.
 4. Select the explicit profile or `defaultProfile`.
 5. Validate the selected `apiUrl` as an HTTP(S) origin and require HTTPS for
    remote hosts.
-6. Resolve the selected profile's `apiKeyEnv`, preferring an already-exported
-   environment variable. A dotenv file is an optional convenience and must be
-   treated as data—not sourced as shell code—when the environment supports
-   reading it safely.
+6. Resolve the selected profile's `apiKeyEnv`, using the first non-empty value
+   from an already-exported environment variable, then the nearest project's
+   `.camofox-browser/.env`, then the user's `~/.camofox-browser/.env`. Read
+   dotenv files as data—not sourced shell code—and support only simple
+   `KEY=VALUE` lines and comments. Do not report a missing credential until all
+   applicable sources have been checked.
 7. Check `<apiUrl>/health` with `Authorization: Bearer $API_KEY` when configured.
    Use the Camofox CLI or `curl` for this request, not a Python HTTP client.
 8. Use that profile's API URL, user ID, and session key for every request.

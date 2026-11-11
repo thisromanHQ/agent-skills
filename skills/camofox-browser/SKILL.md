@@ -27,11 +27,19 @@ Read `references/configuration.md` for profile resolution. Before any request:
 1. Resolve an explicit task profile/URL first, then project config, then user
    config. Do not guess a server or launch one automatically.
 2. Select the profile before resolving its credential. Use only the selected
-   profile's `apiKeyEnv`; prefer an already-exported environment variable.
-3. If no configuration exists and the user did not explicitly supply an API URL
-   and exported credential, stop and explain the required setup.
-4. Treat `.env` as optional data, never as shell code. Do not print, echo, or
-   paste API keys. Do not ask users to send secrets in chat.
+   profile's `apiKeyEnv`. Resolve the first non-empty value in this order:
+   already-exported environment, nearest project `.camofox-browser/.env`, then
+   `~/.camofox-browser/.env`. A missing project configuration file is normal
+   and does not prevent using the user configuration.
+3. If no configuration exists and the user did not explicitly supply an API URL,
+   stop and explain the required setup. When an API URL is available without a
+   selected profile, do not guess an `apiKeyEnv`; require the user to provide a
+   profile or explicitly identify the credential variable.
+4. Treat dotenv files as optional data, never as shell code: parse only simple
+   `KEY=VALUE` lines and comments, and do not source them or perform expansion.
+   Do not print, echo, or paste API keys. Do not ask users to send secrets in
+    chat. Report a credential as missing only after checking each applicable
+    source for a non-empty value.
 5. Check `<apiUrl>/health` before creating tabs. Use the Camofox CLI or
    authenticated `curl` for REST requests; do not use Python HTTP clients for
    Camofox operations. Send the bearer token on every protected request.
