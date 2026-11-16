@@ -9,7 +9,6 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 
 | Skill | Description | Stats |
 | --- | --- | --- |
-| [`cloudflare-cli`](./skills/cloudflare-cli/) | Manage Cloudflare resources safely through the unified, technical-preview `cf` CLI. | [![View cloudflare-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/cloudflare-cli) |
 | [`hass-cli`](./skills/hass-cli/) | Inspect, automate, and administer Home Assistant through the Home Assistant CLI. | [![View hass-cli installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/hass-cli) |
 | [`memory`](./skills/memory/) | Maintain durable project knowledge through a concise `MEMORY.md` index and linked Markdown documents. | [![View memory installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/memory) |
 | [`apple-mail-jxa`](./skills/apple-mail-jxa/) | Automate macOS Mail.app through inline JXA with explicit SQLite metadata search. | [![View apple-mail-jxa installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/apple-mail-jxa) |
@@ -18,17 +17,17 @@ A collection of reusable skills for AI coding agents. Each skill follows the [Ag
 | [`ssh`](./skills/ssh/) | Connect to remote machines and run bounded, non-interactive OpenSSH commands safely. | [![View ssh installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/ssh) |
 | [`camofox-browser`](./skills/camofox-browser/) | Operate local or remote Camofox anti-detection browser deployments with profile-aware API authentication. | [![View camofox-browser installs](https://img.shields.io/badge/skills.sh-view_installs-black)](https://skills.sh/thisromanHQ/agent-skills/camofox-browser) |
 
-### Cloudflare CLI
+### Cloudflare CLI (official upstream skill)
 
-The `cloudflare-cli` skill covers:
+The former custom `cloudflare-cli` skill has been retired in favor of
+Cloudflare's official [`cf-cli`](https://github.com/cloudflare/skills/tree/main/skills/cf-cli).
+Install it globally from upstream:
 
-- Live command discovery through `cf agent-context`, `--help`, and `cf schema`
-- OAuth profiles, API-token authentication, and account or zone context
-- JSON output, Local Explorer routing, and sanitized error handling
-- Dry runs, confirmation, and read-only verification around Cloudflare changes
-- Clear separation between the technical-preview `cf` CLI and Wrangler
+```bash
+npx skills add cloudflare/skills --skill cf-cli -g
+```
 
-The CLI itself is provided by Cloudflare's [`cf` npm package](https://www.npmjs.com/package/cf).
+The official skill is maintained separately and is not included in this collection.
 
 ### Home Assistant CLI
 
@@ -130,7 +129,6 @@ npx skills add thisromanHQ/agent-skills
 Install one skill:
 
 ```bash
-npx skills add thisromanHQ/agent-skills --skill cloudflare-cli
 npx skills add thisromanHQ/agent-skills --skill hass-cli
 npx skills add thisromanHQ/agent-skills --skill memory
 npx skills add thisromanHQ/agent-skills --skill apple-mail-jxa
@@ -162,8 +160,6 @@ Restart opencode after cloning so it discovers the `SKILL.md` files recursively.
 ```text
 .github/workflows/validate.yml
 skills/
-├── cloudflare-cli/
-│   └── SKILL.md
 ├── hass-cli/
 │   └── SKILL.md
 ├── memory/
