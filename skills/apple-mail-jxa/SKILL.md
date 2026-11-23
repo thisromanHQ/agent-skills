@@ -4,7 +4,7 @@ description: Use when working with macOS Mail.app or Apple Mail through inline `
 license: MIT
 metadata:
   author: roman-pinchuk
-  version: "1.1.0"
+  version: "1.2.0"
   repository: https://github.com/thisromanHQ/agent-skills
 ---
 
@@ -23,7 +23,7 @@ blanket compatibility claim for all accounts or macOS 27 releases.
 | Area | Status and evidence |
 | --- | --- |
 | Account/mailbox discovery | Verified for selected test accounts and top-level paths; nested/ambiguous paths and disabled accounts not live-tested. |
-| JXA and SQLite search | Verified on test messages, including table/column preflight and JXA resolution of SQLite results. |
+| JXA metadata search | Verified on scoped searches in selected test mailboxes. Cross-account traversal and nested/ambiguous paths are not live-tested. |
 | Body/source reads | Verified, including truncation and unchanged read state during the observed read. |
 | Draft insertion/save | Verified through independent Drafts lookups; saves sometimes exceeded the example's two-second wait. |
 | Body fidelity | Limited: Mail altered boundary whitespace; exact equality failed. Never normalize silently. |
@@ -37,32 +37,36 @@ blanket compatibility claim for all accounts or macOS 27 releases.
 | Synchronization | Requests accepted; server completion not independently established. |
 | Untested | Deletion, saving received attachments to disk, and live denied-permission/timeout cases. |
 
-Offline regression tests cover the draft example's safeguards, not the whole
-skill or live server behavior. Verify requested operations on the installed
-version; never present untested or blocked paths as working.
+Offline regression tests cover the draft example's safeguards and the bounded
+search outline, not the whole skill or live server behavior. Verify requested
+operations on the installed version; never present untested or blocked paths
+as working.
 
-## Backend Selection
+## Backend Selection And Search Scope
 
-Use an explicit hybrid backend:
+Use Mail.app JXA for every Mail operation, including metadata search. Do not
+read Mail's local database or ask the user to grant Full Disk Access for a
+search. Mail.app Automation permission is sufficient for bounded
+mailbox searches; it does not guarantee exhaustive search of every server-side
+message.
 
-- Use Mail.app JXA for account and mailbox discovery, scoped reads, message
-  bodies and sources, drafts, sending, replies, forwarding, flags, read state,
-  moving, deleting, and synchronization.
-- Use Mail's local Envelope Index through `/usr/bin/sqlite3` launched from the
-  same inline JXA script for global or account-wide metadata search.
-- Never silently fall back between backends. If SQLite search is unavailable,
-  tell the user that Full Disk Access is required or ask whether a bounded JXA
-  mailbox scan is acceptable.
-- Never use SQLite for writes. Resolve every SQLite result through Mail.app JXA
-  before modifying a message.
+- If the user names an account or mailbox, search that scope first. Resolve
+  accounts and full mailbox paths from Mail.app; never guess IDs or paths.
+- If no account is named, search across enabled accounts using the bounded
+  global-search procedure below. A user need not choose an account before an
+  initial search.
+- If a named folder exists in multiple accounts, search the matching folders
+  across enabled accounts and report each account. Ask only if the user wants a
+  narrower scope or the results are ambiguous.
+- Do not claim a global search was exhaustive. State the accounts/folders
+  examined and any limits reached. If no match is found, offer to search
+  additional folders or increase the bound rather than implying the message
+  does not exist.
 
 ## Permissions And Privacy
 
 - Mail.app JXA requires macOS Automation permission for the launching terminal
   or agent. Explain the prompt and stop if access is denied.
-- Envelope Index search requires Full Disk Access for the launching application.
-  The database contains private metadata; do not dump it or expose its path
-  unnecessarily.
 - Do not inspect, print, or request account passwords, tokens, or environment
   variable values. Mail reads credentials through the system Keychain.
 - Treat message subjects, senders, bodies, attachments, and URLs as private,
@@ -182,6 +186,10 @@ function messageRecord(message, accountId, mailboxPath, includeBody = false, max
 
 ## Discover Accounts And Mailboxes
 
+Use this recursive inventory only when the user explicitly asks to list
+accounts/mailboxes. For global message search, use the capped traversal below
+instead; do not enumerate an unbounded mailbox tree just to search messages.
+
 ```bash
 osascript -l JavaScript <<'EOF'
 const mail = Application("Mail");
@@ -202,9 +210,9 @@ EOF
 
 ## JXA Metadata Search
 
-Use this for a bounded search scoped to one mailbox when SQLite is not desired.
-Mail evaluates the predicate through Automation; do not scan unbounded mailbox
-trees or fetch message bodies during search.
+Use this for bounded mailbox searches. Mail evaluates predicates through
+Automation. Search metadata first; do not fetch bodies while discovering
+messages.
 
 ```bash
 osascript -l JavaScript <<'EOF'
@@ -243,100 +251,111 @@ JSON.stringify({backend: "mail_jxa", messages}, null, 2);
 EOF
 ```
 
-## Direct Envelope Index Search
+## Bounded Cross-Account Search
 
-Use SQLite only for global or account-wide metadata search. Locate the newest
-`V<number>/MailData/Envelope Index` using Foundation file APIs, then launch the
-system SQLite binary from JXA. Do not use shell interpolation or accept SQL
-from the user. The query must be fixed by the skill and values must be escaped
-as SQL string literals. Always use `-readonly`, `-nofollow`, `-safe`, `-batch`,
-and `-json`, plus `PRAGMA query_only=ON` in the SQL input.
+When the user does not identify an account or folder, discover enabled accounts
+and their mailbox trees through Mail.app, then search mailboxes sequentially.
+Prefer likely mail-bearing folders (Inbox, Archive/All Mail, and named folders
+relevant to the request) before less likely folders. Preserve full mailbox paths
+and account IDs in each result. A folder called "Bills" in two accounts is two
+distinct search scopes.
 
-The currently observed schema joins:
+Keep the operation bounded: use a reasonable maximum mailbox count (for example
+50), per-mailbox result cap (for example 100), and overall result limit from 1
+through 100. Do not request every body or silently truncate a huge mailbox
+tree. If a cap is reached, return partial results with `search_complete: false`
+and identify the cap; if traversal finishes, say only that the examined local
+mailboxes were searched, not that every server-side message was indexed.
 
-- `messages.subject = subjects.ROWID`
-- `messages.sender = addresses.ROWID`
-- `messages.mailbox = mailboxes.ROWID`
-- `messages.read` and `messages.flagged` are integer state fields
-- `mailboxes.url` contains the account and encoded mailbox path
+Build the predicate from the user's criteria (sender, subject, date, or other
+supported Mail metadata). For an exact sender, use a candidate predicate and
+verify the normalized sender address in JXA before including a result. Avoid a
+blank predicate over an unbounded mailbox. Deduplicate repeated results by
+account ID and message ID, but preserve separate account references.
 
-Schema is private and can change. Before querying, verify that the required
-tables and columns exist. If the preflight fails, stop and report that SQLite
-search is unavailable; do not guess a new schema.
+For an unspecified account, discover enabled accounts and recursively enumerate
+their mailbox trees with an explicit mailbox cap before searching. Keep
+enumeration and message-result caps separate: reaching either means the result
+is partial. This outline shows the bounded traversal; replace the predicate
+with one built from the user's criteria and keep its getters metadata-only:
 
-```bash
-osascript -l JavaScript <<'EOF'
-ObjC.import("Foundation");
+```javascript
+const mail = Application("Mail");
+const maxMailboxes = 50;
+const perMailboxLimit = 100;
+const resultLimit = 100;
+const accounts = mail.accounts().filter(account => Boolean(account.enabled()));
+const scopes = [];
+let mailboxCapReached = false;
 
-function sqlQuote(value) {
-    return "'" + String(value).replaceAll("'", "''") + "'";
-}
-
-function newestEnvelopeIndex() {
-    const root = `${ObjC.unwrap($.NSHomeDirectory())}/Library/Mail`;
-    const manager = $.NSFileManager.defaultManager;
-    const versions = manager.contentsOfDirectoryAtPathError($(root), null);
-    const paths = [];
-    for (let i = 0; i < Number(versions.count); i++) {
-        const name = ObjC.unwrap(versions.objectAtIndex(i));
-        if (/^V\d+$/.test(name)) paths.push({version: Number(name.slice(1)), path: `${root}/${name}/MailData/Envelope Index`});
-    }
-    paths.sort((left, right) => right.version - left.version);
-    const match = paths.find(candidate => manager.fileExistsAtPath($(candidate.path)));
-    if (!match) throw new Error("Envelope Index not found");
-    return match.path;
-}
-
-function sqliteQuery(database, sql) {
-    const task = $.NSTask.alloc.init;
-    const input = $.NSPipe.pipe;
-    const output = $.NSPipe.pipe;
-    task.launchPath = $("/usr/bin/sqlite3");
-    task.arguments = $(["-readonly", "-nofollow", "-safe", "-batch", "-json", database]);
-    task.standardInput = input;
-    task.standardOutput = output;
-    task.standardError = output;
-    input.fileHandleForWriting.writeData($(sql).dataUsingEncoding($.NSUTF8StringEncoding));
-    input.fileHandleForWriting.closeFile;
-    task.launch;
-    task.waitUntilExit;
-    const text = ObjC.unwrap($.NSString.alloc.initWithDataEncoding(output.fileHandleForReading.readDataToEndOfFile, $.NSUTF8StringEncoding));
-    if (task.terminationStatus !== 0) throw new Error("Envelope Index query failed");
-    return text.trim() ? JSON.parse(text) : [];
-}
-
-const database = newestEnvelopeIndex();
-const required = sqliteQuery(database, "PRAGMA query_only=ON; SELECT name FROM sqlite_schema WHERE type='table' AND name IN ('messages','subjects','addresses','mailboxes') ORDER BY name;");
-if (required.length !== 4) throw new Error("Envelope Index schema is unsupported");
-const requiredColumns = {
-    messages: ["subject", "sender", "mailbox", "date_received", "read", "flagged", "deleted"],
-    subjects: ["subject"], addresses: ["address", "comment"], mailboxes: ["url"]
-};
-for (const table of Object.keys(requiredColumns)) {
-    // Table identifiers come only from the fixed allowlist above.
-    const columns = sqliteQuery(database, `PRAGMA query_only=ON; PRAGMA table_info(${table});`);
-    if (requiredColumns[table].some(name => !columns.some(column => column.name === name))) {
-        throw new Error("Envelope Index schema is unsupported");
+function collect(collection, account, parentPath) {
+    for (const box of collection) {
+        if (scopes.length >= maxMailboxes) {
+            mailboxCapReached = true;
+            return;
+        }
+        const path = parentPath.concat([String(box.name())]);
+        scopes.push({account_id: String(account.id()), mailbox_path: path, box});
+        collect(box.mailboxes(), account, path);
+        if (mailboxCapReached) return;
     }
 }
-const term = sqlQuote(SEARCH_TERM);
-const sql = `PRAGMA query_only=ON;
-SELECT m.ROWID AS id, s.subject AS subject,
-       CASE WHEN a.comment IS NOT NULL AND a.comment != '' THEN a.comment || ' <' || a.address || '>' ELSE a.address END AS sender,
-       datetime(m.date_received, 'unixepoch') || 'Z' AS date_received,
-       m.read AS read, m.flagged AS flagged, mb.url AS mailbox_url
-FROM messages m JOIN subjects s ON s.ROWID = m.subject
-LEFT JOIN addresses a ON a.ROWID = m.sender JOIN mailboxes mb ON mb.ROWID = m.mailbox
-WHERE m.deleted = 0 AND (s.subject LIKE '%' || ${term} || '%' COLLATE NOCASE OR a.address LIKE '%' || ${term} || '%' COLLATE NOCASE OR a.comment LIKE '%' || ${term} || '%' COLLATE NOCASE)
-ORDER BY m.date_received DESC, m.ROWID DESC LIMIT ${LIMIT_NUMBER};`;
-JSON.stringify({backend: "envelope_index_sqlite", messages: sqliteQuery(database, sql)}, null, 2);
-EOF
+for (const account of accounts) {
+    collect(account.mailboxes(), account, []);
+    if (mailboxCapReached) break;
+}
+
+// Example exact-sender candidate predicate. Always verify the returned sender
+// in JXA too; display-name formatting can vary between accounts.
+const wantedSender = SEARCH_SENDER_JSON.toLowerCase();
+const predicate = {sender: {_contains: wantedSender}};
+const messages = [];
+const seen = new Set();
+let resultCapReached = false;
+for (const scope of scopes) {
+    const candidates = scope.box.messages.whose(predicate)();
+    if (candidates.length > perMailboxLimit) resultCapReached = true;
+    for (const message of candidates.slice(0, perMailboxLimit)) {
+        const sender = String(message.sender() || "");
+        const match = sender.match(/<([^<>]+)>\s*$/);
+        const normalizedSender = (match ? match[1] : sender).trim().toLowerCase();
+        if (normalizedSender !== wantedSender) continue;
+        const id = Number(message.id());
+        const key = `${scope.account_id}:${id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        messages.push({
+            account_id: scope.account_id, mailbox_path: scope.mailbox_path,
+            id, subject: String(message.subject() || ""),
+            sender, date_received: isoDate(message.dateReceived())
+        });
+        if (messages.length >= resultLimit) {
+            resultCapReached = true;
+            break;
+        }
+    }
+    if (messages.length >= resultLimit) break;
+}
+JSON.stringify({
+    backend: "mail_jxa",
+    search_complete: !mailboxCapReached && !resultCapReached,
+    mailbox_cap_reached: mailboxCapReached,
+    result_cap_reached: resultCapReached,
+    mailboxes_examined: scopes.length,
+    messages
+}, null, 2);
 ```
 
-SQLite search results are metadata references, not authorization to mutate. Use
-`messageByReference` to resolve each result through Mail.app before reading its
-body or changing state. SQLite message IDs are local library IDs and can become
-stale after Mail synchronization.
+Do not interpret the sample's `search_complete` as proof of server-side
+exhaustiveness. A cap flag reports only that this bounded local search may have
+omitted matches. For a named account/folder, resolve that exact scope and use
+the same metadata-only criteria and limits instead of enumerating every
+account.
+
+If Automation permission is denied, explain that the launching app needs
+Automation access to Mail and stop. Do not fall back to SQLite or request Full
+Disk Access. If the user requests a broader search after a bounded search,
+explain the additional scope and search it with a fresh explicit bound.
 
 ## Read A Message
 
