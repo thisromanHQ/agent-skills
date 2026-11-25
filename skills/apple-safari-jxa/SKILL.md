@@ -190,6 +190,39 @@ When a site uses links as buttons, inspect both `button` and `a` elements (and
 their `aria-label` values). LinkedIn, for example, renders Connect and Message
 actions as accessible links in some views.
 
+## Identify, Act, and Verify
+
+Use a short inspect → act → verify loop for every page interaction. This reduces
+wrong-target actions on pages with repeated labels, overlays, or client-side
+rerenders.
+
+1. **Inspect the intended page and region.** Confirm the exact tab and current
+   URL. Find controls by visible text or accessible attributes, then scope them
+   to the expected landmark: for example, the named profile header, dialog, or
+   result card. Return only relevant candidates with their role, label, enabled
+   state, and a short nearby heading or text. Avoid dumping the whole DOM.
+2. **Require an unambiguous target.** Before acting, require exactly one
+   candidate in the expected region. Check that it is rendered, visible, and
+   enabled. If a dialog or menu is expected, confirm its title and scope the
+   target inside it. If the target is missing, duplicated, or unclear, stop and
+   inspect again or ask the user; do not guess based on order or a generic label.
+3. **Re-resolve immediately before acting.** Pages can rerender after inspection.
+   In the action script, find the same target again and repeat the uniqueness,
+   visibility, and enabled checks before interacting. Where practical, check
+   that the control's center is hit-tested to itself (or a descendant), so an
+   overlay is not obscuring it. If any check fails, do not act.
+4. **Verify the outcome in the same tab.** Re-read the relevant state and look
+   for a specific result, such as the expected dialog, changed label, updated
+   URL, success notice, or new item. A successful script or click alone is not
+   proof. If the result is uncertain, inspect before considering any retry; do
+   not repeat a potentially consequential action blindly.
+
+Prefer a semantic locator and a scoped parent over generated CSS classes or
+position in a global list. For example, when there are several “Connect”
+controls, first identify the unique profile heading, then locate the Connect
+control inside that profile's region. If the page offers no reliable way to
+scope or distinguish the target, stop rather than selecting the first match.
+
 ## Read and Interact
 
 Prefer visible labels and accessible attributes over generated CSS classes.
@@ -275,6 +308,15 @@ success indicator. A cleared editor alone is not sufficient proof.
 
 ## Screenshots and Privacy
 
-Use `screencapture` only when explicitly requested. Screenshots may contain
-private account data, so delete temporary artifacts after the task. Never export
-or log cookies, credentials, or storage to reuse a session.
+Screenshots are an optional diagnostic, not the default interaction method.
+When the user has authorized screenshots for the task, use `screencapture` only
+if the rendered layout is necessary to resolve ambiguity (for example, an
+overlapping dialog or an unlabeled menu). Use the image to guide a fresh
+inspection of the page; do not click by screen coordinates or treat pixels as
+proof that an action succeeded. If a screenshot would help but has not been
+authorized, ask before capturing it.
+
+Screenshots may contain private account data. Capture only the relevant Safari
+window or region where practical, avoid displaying or retaining unrelated
+private content, and delete temporary artifacts after the task. Never export or
+log cookies, credentials, or storage to reuse a session.
